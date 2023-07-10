@@ -1,10 +1,13 @@
+from starlette import status
+
+
 class NoSuchProfile(Exception):
-    pass
+    _STATUS_CODE = status.HTTP_404_NOT_FOUND
 
 
 class NoProfilePicture(Exception):
-    pass
+    _STATUS_CODE = status.HTTP_404_NOT_FOUND
 
 
 class NotAuthenticated(Exception):
-    pass
+    _STATUS_CODE = status.HTTP_401_UNAUTHORIZED

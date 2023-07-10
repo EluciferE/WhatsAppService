@@ -1,40 +1,22 @@
 import selenium.common.exceptions
 
-from .utils import with_timer
+from .decorators import with_timer
 from .element_xpath import ELEMENT_XPATH
 from .exceptions import NoProfilePicture, NoSuchProfile, NotAuthenticated
 
 from typing import Optional
-import os
 import time
 import requests
+from .whatsapp_mixins import BaseWhatsAppBrowser
 
-from selenium.webdriver.remote.webelement import WebElement
-from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
 
-class WhatsAppBrowser:
-    _WP_LINK = "https://web.whatsapp.com"
-    _USER_LINK = "send/?phone=%s&text&type=phone_number&app_absent=0"
-
+class WhatsAppBrowser(BaseWhatsAppBrowser):
     @with_timer
-    def __init__(self, user_data_dir: Optional[str] = "user-data-dir", fullscreen: bool = True):
-        user_data_dir = os.path.join(os.getcwd(), user_data_dir)
-
-        service = Service(executable_path=ChromeDriverManager().install())
-        chrome_options = Options()
-        chrome_options.add_argument(f"user-data-dir={user_data_dir}")
-        if fullscreen:
-            chrome_options.add_argument(f"--start-maximized")
-
-        self.browser = webdriver.Chrome(service=service, options=chrome_options)
-        self.browser.get(self._WP_LINK)
+    def __init__(self, user_data_dir: Optional[str] = "user-data-dir"):
+        super().__init__(user_data_dir)
 
     @with_timer
     def save_login_qr(self, filename: Optional[str] = "qr-code.png", timeout: float = 10) -> bool:
@@ -60,14 +42,10 @@ class WhatsAppBrowser:
         return requests.get(picture_url).content
 
     @with_timer
-    def get_profile_picture_url(self, phone: str) -> Optional[str]:
-        try:
-            self._open_profile_chat(phone)
-            picture_url = self._get_big_picture_url()
-            return picture_url
-        except (NoSuchProfile, NoProfilePicture, NotAuthenticated) as e:
-            print(e)
-            return
+    def get_profile_picture_url(self, phone: str) -> str:
+        self._open_profile_chat(phone)
+        picture_url = self._get_big_picture_url()
+        return picture_url
 
     @with_timer
     def _open_profile_chat(self, phone: str) -> bool:
@@ -104,7 +82,7 @@ class WhatsAppBrowser:
     @with_timer
     def _get_big_picture_url(self) -> str:
         self._open_profile_sidebar()
-        return self.__find_big_picture_url()
+        return self._find_big_picture_url()
 
     @with_timer
     def _open_profile_sidebar(self):
@@ -113,7 +91,7 @@ class WhatsAppBrowser:
         profile_pic.click()
 
     @with_timer
-    def __find_big_picture_url(self) -> str:
+    def _find_big_picture_url(self) -> str:
         profile_sidebar = self._get_element_until(10, by=By.TAG_NAME, value="section")
         try:
             time.sleep(2)
@@ -133,22 +111,5 @@ class WhatsAppBrowser:
         is_page_loaded = self._get_element_until(timeout=timeout, by=By.ID, value="side")
         return bool(is_page_loaded)
 
-    def _get(self, url: str):
-        return self.browser.get(url)
-
     def _get_profile_page(self, phone: str):
         return self._get(f"{self._WP_LINK}/{self._USER_LINK}" % phone)
-
-    def _find_element(self, by: str, value: str) -> Optional[WebElement]:
-        try:
-            return self.browser.find_element(by, value)
-        except NoSuchElementException:
-            return
-
-    def _get_element_until(self, timeout: float, by: By, value: str) -> Optional[WebElement]:
-        try:
-            return WebDriverWait(self.browser, timeout=timeout).until(
-                lambda x: x.find_element(by, value)
-            )
-        except TimeoutException:
-            return
