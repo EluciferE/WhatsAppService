@@ -8,7 +8,7 @@ import logging
 import time
 from selenium.webdriver.remote.webelement import WebElement
 from selenium import webdriver
-from selenium.common import TimeoutException, NoSuchElementException
+from selenium.common import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -40,6 +40,15 @@ class BaseWhatsAppBrowser(Locked):
 
         is_page_loaded = self._get_at_least_one_element(elements, timeout)
         return bool(is_page_loaded)
+
+    @staticmethod
+    def _force_click(element: WebElement):
+        while True:
+            try:
+                element.click()
+                break
+            except ElementClickInterceptedException:
+                continue
 
     def _get(self, url: str):
         if not self._lock.locked():
