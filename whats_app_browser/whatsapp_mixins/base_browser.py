@@ -25,9 +25,15 @@ class BaseWhatsAppBrowser(Locked):
 
         service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
+        chrome_options.add_argument('--headless')
         chrome_options.add_argument(f"user-data-dir={user_data_dir}")
         chrome_options.add_argument(f"start-maximized")
         chrome_options.add_argument(f"ignore-certificate-errors")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--remote-debugging-port=9222")
+        chrome_options.add_argument(f'--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                                    f' (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
 
         self._browser = webdriver.Chrome(service=service, options=chrome_options)
         self._logger = logging.getLogger("WhatsApp Browser")
