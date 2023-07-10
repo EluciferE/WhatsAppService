@@ -2,7 +2,7 @@ import selenium.common.exceptions
 
 from .decorators import with_timer
 from .elements import QR_CODE, CHATS_SIDEBAR, CURRENT_CHAT, POPUP, PROFILE_SIDEBAR, IMAGE, PROFILE_SMALL_PIC
-from .exceptions import NoProfilePicture, NoSuchProfile, NotAuthenticated
+from .exceptions import NoProfilePicture, NoSuchProfile, NotAuthenticated, Authenticated
 from .whatsapp_mixins import BaseWhatsAppBrowser
 
 from typing import Optional
@@ -18,17 +18,18 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
         super().__init__(user_data_dir)
 
     @with_timer
-    def save_login_qr(self, filename: Optional[str] = "qr-code.png", timeout: float = 10) -> bool:
-        self._get(self._WP_LINK)
-        self._wait_unit_page_loaded(timeout)
+    def get_login_qr_code_as_base64(self, timeout: float = 10) -> str:
+        login_status = self.is_authenticated(timeout)
+        if login_status is True:
+            raise Authenticated()
+
         qr_code = self._find_element(QR_CODE)
         if qr_code:
-            qr_code.screenshot(filename)
-            return True
-        return False
+            return qr_code.screenshot_as_base64
 
     @with_timer
-    def verify_session(self, timeout: float = 10) -> bool:
+    def is_authenticated(self, timeout: float = 10) -> bool:
+        # TODO @meow: check for preload window instead of sidebar
         self._get(self._WP_LINK)
         self._wait_unit_page_loaded(timeout)
         if self._find_element(CHATS_SIDEBAR):
@@ -69,7 +70,7 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
                 return True
 
             if popup_text == "Неверный номер телефона." or time.time() - start_time >= TIMEOUT:
-                raise NoSuchProfile(f"Profile with phone {phone!r} not found!")
+                raise NoSuchProfile(phone)
 
             time.sleep(POLL_FREQUENCY)
 
@@ -89,7 +90,7 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
     def _open_profile_sidebar(self):
         profile_pic = self._get_element_until(PROFILE_SMALL_PIC, timeout=10)
         time.sleep(1)
-        profile_pic.click()
+        self._force_click(profile_pic)
 
     @with_timer
     def _find_big_picture_url(self) -> str:
@@ -97,7 +98,7 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
         try:
             time.sleep(2)
             if profile_sidebar is None:
-                raise NoProfilePicture('Can`t open profile sidebar')
+                raise NoProfilePicture()
 
             image = profile_sidebar.find_element(*IMAGE)
             image_url = image.get_attribute("src")
@@ -106,4 +107,4 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
 
             raise NoSuchElementException()
         except NoSuchElementException:
-            raise NoProfilePicture('Profile picture not found')
+            raise NoProfilePicture()
