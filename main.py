@@ -12,7 +12,10 @@ app = FastAPI()
 
 @app.get("/get_profile_picture_url/")
 async def get_profile_picture_url(phone: str):
-    await wp_lock.acquire()
-    url = wp.get_profile_picture_url(phone)
-    wp_lock.release()
-    return JSONResponse({"phone": phone, "url": url}, status_code=status.HTTP_200_OK)
+    try:
+        await wp_lock.acquire()
+        url = wp.get_profile_picture_url(phone)
+        wp_lock.release()
+        return JSONResponse({"phone": phone, "url": url}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return JSONResponse({"message": str(e)}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

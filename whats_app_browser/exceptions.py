@@ -4,3 +4,7 @@ class NoSuchProfile(Exception):
 
 class NoProfilePicture(Exception):
     pass
+
+
+class NotAuthenticated(Exception):
+    pass
