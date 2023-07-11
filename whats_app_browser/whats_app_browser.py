@@ -29,12 +29,7 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
 
     @with_timer
     def is_authenticated(self, timeout: float = 10) -> bool:
-        # TODO @meow: check for preload window instead of sidebar
-        self._get(self._WP_LINK)
-        self._wait_unit_page_loaded(timeout)
-        if self._find_element(CHATS_SIDEBAR):
-            return True
-        return False
+        return self._check_authentication(timeout)
 
     @with_timer
     def get_profile_picture_bytes(self, phone: str) -> Optional[bytes]:
