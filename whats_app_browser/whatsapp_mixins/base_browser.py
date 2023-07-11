@@ -2,7 +2,7 @@ import os
 from typing import Optional, List, Tuple
 from ..mixins import Locked
 from ..types import SearchElement
-from ..elements import QR_CODE, CHATS_SIDEBAR
+from ..elements import QR_CODE, QR_PRELOAD, CHATS_SIDEBAR, LOGOUT_BUTTON
 import logging
 
 import time
@@ -25,7 +25,7 @@ class BaseWhatsAppBrowser(Locked):
 
         service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         chrome_options.add_argument(f"user-data-dir={user_data_dir}")
         chrome_options.add_argument(f"start-maximized")
         chrome_options.add_argument(f"ignore-certificate-errors")
@@ -46,6 +46,14 @@ class BaseWhatsAppBrowser(Locked):
 
         is_page_loaded = self._get_at_least_one_element(elements, timeout)
         return bool(is_page_loaded)
+
+    def _check_authentication(self, timeout: float = 20) -> bool:
+        self._get(self._WP_LINK)
+        elements = [QR_PRELOAD, LOGOUT_BUTTON, QR_CODE, CHATS_SIDEBAR]
+        element, _ = self._get_at_least_one_element(elements, timeout)
+        if element in [CHATS_SIDEBAR, LOGOUT_BUTTON]:
+            return True
+        return False
 
     @staticmethod
     def _force_click(element: WebElement):
