@@ -1,7 +1,7 @@
 import selenium.common.exceptions
 
 from .decorators import with_timer
-from .elements import QR_CODE, CHATS_SIDEBAR, CURRENT_CHAT, POPUP, PROFILE_SIDEBAR, IMAGE, PROFILE_SMALL_PIC
+from .elements import QR_CODE, CURRENT_CHAT, POPUP, PROFILE_SIDEBAR, IMAGE, PROFILE_SMALL_PIC
 from .exceptions import NoProfilePicture, NoSuchProfile, NotAuthenticated, Authenticated
 from .whatsapp_mixins import BaseWhatsAppBrowser
 
@@ -26,6 +26,8 @@ class WhatsAppBrowser(BaseWhatsAppBrowser):
         qr_code = self._find_element(QR_CODE)
         if qr_code:
             return qr_code.screenshot_as_base64
+
+        raise Exception("Can't find QR-Code on page")
 
     @with_timer
     def is_authenticated(self, timeout: float = 10) -> bool:
