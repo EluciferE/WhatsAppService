@@ -3,6 +3,10 @@ from starlette.responses import JSONResponse
 from starlette import status
 from fastapi import FastAPI
 from backend import catch_server_error
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = FastAPI()
 whats_app = WhatsAppBrowser()
@@ -36,3 +40,12 @@ async def login():
     async with whats_app as browser:
         qr_code = browser.get_login_qr_code_as_base64()
     return JSONResponse({"qr_code": qr_code}, status_code=status.HTTP_200_OK)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        app=app, host=os.getenv("HOST", "127.0.0.1"),
+        port=int(os.getenv("PORT", 8000))
+    )
