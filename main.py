@@ -14,15 +14,19 @@ whats_app = WhatsAppBrowser()
 
 @app.on_event('startup')
 async def init_browser():
+    from time import sleep
     async with whats_app as browser:
         browser.sing_to_wp()
+        browser._wait_unit_page_loaded()
+        sleep(3)
+        browser.inject_api()
 
 
-@app.get("/get_profile_picture_url/")
+@app.get("/get_profile_picture_base64/")
 @catch_server_error
 async def get_profile_picture_url(phone: str):
     async with whats_app as browser:
-        url = browser.get_profile_picture_url(phone)
+        url = browser.get_profile_picture_base64(phone)
     return JSONResponse({"phone": phone, "url": url}, status_code=status.HTTP_200_OK)
 
 
