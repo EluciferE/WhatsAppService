@@ -1,8 +1,8 @@
 import os
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
 from ..mixins import Locked
 from ..types import SearchElement
-from ..elements import QR_CODE, CHATS_SIDEBAR
+from ..elements import QR_CODE, QR_PRELOAD, CHATS_SIDEBAR, LOADING_SCREEN
 import logging
 
 import time
@@ -17,7 +17,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 class BaseWhatsAppBrowser(Locked):
     _WP_LINK = "https://web.whatsapp.com"
-    _USER_LINK = "send/?phone=%s&text&type=phone_number&app_absent=0"
+    _USER_LINK = "send/?phone=%s"
 
     def __init__(self, user_data_dir: str):
         super().__init__()
@@ -25,7 +25,7 @@ class BaseWhatsAppBrowser(Locked):
 
         service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         chrome_options.add_argument(f"user-data-dir={user_data_dir}")
         chrome_options.add_argument(f"start-maximized")
         chrome_options.add_argument(f"ignore-certificate-errors")
@@ -34,6 +34,8 @@ class BaseWhatsAppBrowser(Locked):
         chrome_options.add_argument("--remote-debugging-port=9222")
         chrome_options.add_argument(f'--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                                     f' (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
+        chrome_options.add_argument("--no-default-browser-check")
+        chrome_options.add_argument("--disable-site-isolation-trials")
 
         self._browser = webdriver.Chrome(service=service, options=chrome_options)
         self._logger = logging.getLogger("WhatsApp Browser")
@@ -46,6 +48,13 @@ class BaseWhatsAppBrowser(Locked):
 
         is_page_loaded = self._get_at_least_one_element(elements, timeout)
         return bool(is_page_loaded)
+
+    def _check_authentication(self, timeout: float = 20) -> bool:
+        elements = [QR_PRELOAD, LOADING_SCREEN, QR_CODE, CHATS_SIDEBAR]
+        element, _ = self._get_at_least_one_element(elements, timeout)
+        if element in [CHATS_SIDEBAR, LOADING_SCREEN]:
+            return True
+        return False
 
     @staticmethod
     def _force_click(element: WebElement):
@@ -91,5 +100,23 @@ class BaseWhatsAppBrowser(Locked):
                 web_element = self._find_element(element)
                 if web_element:
                     return element, web_element
+
+            time.sleep(POLL_FREQ)
+
+    def _add_script_file(self, name: str):
+        with open(f"whats_app_browser/js/{name}", "r", encoding="utf-8") as script:
+            script = script.read()
+            self._browser.execute_script(script)
+
+    def _execute_script_until_value(self, script: str, value: Any, timeout: float = 10) -> Optional[str]:
+        POLL_FREQ = 0.5
+        start_time = time.monotonic()
+        while True:
+            if time.monotonic() - start_time >= timeout:
+                return
+
+            result = self._browser.execute_script(script)
+            if result == value:
+                return result
 
             time.sleep(POLL_FREQ)

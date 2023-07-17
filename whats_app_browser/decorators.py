@@ -1,8 +1,11 @@
+import functools
 import logging
 from time import time
+from functools import wraps
 
 
 def with_timer(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time()
         res = func(*args, **kwargs)

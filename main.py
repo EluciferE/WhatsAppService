@@ -14,11 +14,15 @@ whats_app = WhatsAppBrowser()
 
 @app.on_event('startup')
 async def init_browser():
+    from time import sleep
     async with whats_app as browser:
         browser.sing_to_wp()
+        browser._wait_unit_page_loaded()
+        sleep(3)
+        browser.inject_api()
 
 
-@app.get("/get_profile_picture_url/")
+@app.get("/get_profile_picture_url")
 @catch_server_error
 async def get_profile_picture_url(phone: str):
     async with whats_app as browser:
@@ -26,7 +30,7 @@ async def get_profile_picture_url(phone: str):
     return JSONResponse({"phone": phone, "url": url}, status_code=status.HTTP_200_OK)
 
 
-@app.get("/is_authenticated/")
+@app.get("/is_authenticated")
 @catch_server_error
 async def is_authenticated():
     async with whats_app as browser:
@@ -34,7 +38,7 @@ async def is_authenticated():
     return JSONResponse({"status": login_status}, status_code=status.HTTP_200_OK)
 
 
-@app.get("/login/")
+@app.get("/login")
 @catch_server_error
 async def login():
     async with whats_app as browser:
@@ -47,5 +51,5 @@ if __name__ == "__main__":
 
     uvicorn.run(
         app=app, host=os.getenv("HOST", "127.0.0.1"),
-        port=int(os.getenv("PORT", 8000))
+        port=int(os.getenv("PORT", 8000)),
     )
