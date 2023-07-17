@@ -22,15 +22,15 @@ async def init_browser():
         browser.inject_api()
 
 
-@app.get("/get_profile_picture_base64/")
+@app.get("/get_profile_picture_url")
 @catch_server_error
 async def get_profile_picture_url(phone: str):
     async with whats_app as browser:
-        url = browser.get_profile_picture_base64(phone)
+        url = browser.get_profile_picture_url(phone)
     return JSONResponse({"phone": phone, "url": url}, status_code=status.HTTP_200_OK)
 
 
-@app.get("/is_authenticated/")
+@app.get("/is_authenticated")
 @catch_server_error
 async def is_authenticated():
     async with whats_app as browser:
@@ -38,7 +38,7 @@ async def is_authenticated():
     return JSONResponse({"status": login_status}, status_code=status.HTTP_200_OK)
 
 
-@app.get("/login/")
+@app.get("/login")
 @catch_server_error
 async def login():
     async with whats_app as browser:
