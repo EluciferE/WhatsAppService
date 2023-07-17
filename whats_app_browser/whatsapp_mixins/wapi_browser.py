@@ -53,24 +53,35 @@ class WAPIBrowser(BaseWhatsAppBrowser):
             True
         )
 
+    def open_profile(self, phone: str):
+        ans = self._browser.execute_async_script("""
+            var callback = arguments[arguments.length - 1];
+            WAPI.checkNumberStatus(`${arguments[0]}@c.us`)
+                .then(function(result) {
+                    callback(result);
+                })
+                .catch(function(error) {
+                    callback(null);
+                });
+        """, self._format_phone(phone))
+        return ans
+
     def is_profile_exists(self, phone: str) -> bool:
         return self._get_profile(phone).numberExists
 
-    def get_profile_picture(self, phone: str):
+    def check_profile_and_get_avatar_url(self, phone: str) -> str:
         profile = self._get_profile(phone)
         if not profile.numberExists:
             raise NoSuchProfile(phone)
 
-        picture = self._get_profile_picture(profile.id)
+        picture = self._get_profile_picture_url(phone)
         if not picture:
             raise NoProfilePicture()
 
         return picture
 
     def _get_profile(self, phone: str) -> Profile:
-        print("Getting profile", phone)
         phone = self._format_phone(phone)
-        print("Getting format_profile", phone)
         ans = self._browser.execute_async_script("""
             var callback = arguments[arguments.length - 1];
             WAPI.checkNumberStatus(`${arguments[0]}@c.us`)
@@ -82,8 +93,6 @@ class WAPIBrowser(BaseWhatsAppBrowser):
                 });
         """, phone)
 
-        print("Getting ans", ans)
-
         if ans is None:
             raise Exception("Error getting profile")
 
@@ -93,18 +102,19 @@ class WAPIBrowser(BaseWhatsAppBrowser):
     def _format_phone(cls, phone: str) -> str:
         return ''.join([c for c in phone if c.isdigit()])
 
-    def _get_profile_picture(self, profile_id: dict) -> Union[str, bool]:
+    def _get_profile_picture_url(self, phone: str) -> str:
+        phone = self._format_phone(phone)
         ans = self._browser.execute_async_script("""
             var callback = arguments[arguments.length - 1];
-            WAPI.getProfilePicFromId(arguments[0])
+            await WPP.contact.getProfilePictureUrl(arguments[0])
                 .then(function(result) {
                     callback(result);
                 })
                 .catch(function(error) {
                     callback(null);
                 });
-        """, profile_id)
+        """, phone)
         if ans is None:
-            raise Exception("Error getting profile picture")
+            raise NoProfilePicture()
 
         return ans
