@@ -20,6 +20,8 @@ class WhatsAppBrowser(WAPIBrowser):
         if qr_code:
             return qr_code.screenshot_as_base64
 
+        raise Exception("Can't find QR-Code on page")
+
     @with_timer
     def is_authenticated(self, timeout: float = 10) -> bool:
         return self._check_authentication(timeout)
