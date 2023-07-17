@@ -14,8 +14,12 @@ whats_app = WhatsAppBrowser()
 
 @app.on_event('startup')
 async def init_browser():
+    from time import sleep
     async with whats_app as browser:
         browser.sing_to_wp()
+        browser._wait_unit_page_loaded()
+        sleep(3)
+        browser.inject_api()
 
 
 @app.get("/get_profile_picture_url")
