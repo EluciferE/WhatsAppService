@@ -25,7 +25,7 @@ class BaseWhatsAppBrowser(Locked):
 
         service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
-        # chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless')
         chrome_options.add_argument(f"user-data-dir={user_data_dir}")
         chrome_options.add_argument(f"start-maximized")
         chrome_options.add_argument(f"ignore-certificate-errors")
