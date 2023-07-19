@@ -9,14 +9,6 @@ class NoSuchProfile(Exception):
         super().__init__(message)
 
 
-class NoProfilePicture(Exception):
-    _STATUS_CODE = status.HTTP_404_NOT_FOUND
-
-    def __init__(self, message=None):
-        message = message or "Profile picture not found"
-        super().__init__(message)
-
-
 class NotAuthenticated(Exception):
     _STATUS_CODE = status.HTTP_401_UNAUTHORIZED
 
