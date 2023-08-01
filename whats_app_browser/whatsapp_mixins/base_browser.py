@@ -6,6 +6,7 @@ from ..elements import QR_CODE, QR_PRELOAD, CHATS_SIDEBAR, LOADING_SCREEN
 import logging
 
 import time
+import asyncio
 from selenium.webdriver.remote.webelement import WebElement
 from selenium import webdriver
 from selenium.common import TimeoutException, NoSuchElementException, ElementClickInterceptedException
@@ -101,7 +102,7 @@ class BaseWhatsAppBrowser(Locked):
                 if web_element:
                     return element, web_element
 
-            time.sleep(POLL_FREQ)
+            asyncio.sleep(POLL_FREQ)
 
     def _add_script_file(self, name: str):
         with open(f"whats_app_browser/js/{name}", "r", encoding="utf-8") as script:
@@ -119,4 +120,4 @@ class BaseWhatsAppBrowser(Locked):
             if result == value:
                 return result
 
-            time.sleep(POLL_FREQ)
+            asyncio.sleep(POLL_FREQ)
