@@ -1,8 +1,8 @@
-from typing import Optional, Union
+from typing import Optional
 
 from .base_browser import BaseWhatsAppBrowser
 from ..types import Profile
-from ..exceptions import NoSuchProfile, NoProfilePicture
+from ..exceptions import NoSuchProfile
 
 
 class WAPIBrowser(BaseWhatsAppBrowser):
@@ -69,16 +69,12 @@ class WAPIBrowser(BaseWhatsAppBrowser):
     def is_profile_exists(self, phone: str) -> bool:
         return self._get_profile(phone).numberExists
 
-    def check_profile_and_get_avatar_url(self, phone: str) -> str:
+    def check_profile_and_get_avatar_url(self, phone: str) -> Optional[str]:
         profile = self._get_profile(phone)
         if not profile.numberExists:
             raise NoSuchProfile(phone)
 
-        picture = self._get_profile_picture_url(phone)
-        if not picture:
-            raise NoProfilePicture()
-
-        return picture
+        return self._get_profile_picture_url(phone)
 
     def _get_profile(self, phone: str) -> Profile:
         phone = self._format_phone(phone)
@@ -102,9 +98,9 @@ class WAPIBrowser(BaseWhatsAppBrowser):
     def _format_phone(cls, phone: str) -> str:
         return ''.join([c for c in phone if c.isdigit()])
 
-    def _get_profile_picture_url(self, phone: str) -> str:
+    def _get_profile_picture_url(self, phone: str) -> Optional[str]:
         phone = self._format_phone(phone)
-        ans = self._browser.execute_async_script("""
+        return self._browser.execute_async_script("""
             var callback = arguments[arguments.length - 1];
             await WPP.contact.getProfilePictureUrl(arguments[0])
                 .then(function(result) {
@@ -114,7 +110,3 @@ class WAPIBrowser(BaseWhatsAppBrowser):
                     callback(null);
                 });
         """, phone)
-        if ans is None:
-            raise NoProfilePicture()
-
-        return ans

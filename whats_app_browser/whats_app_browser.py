@@ -27,5 +27,5 @@ class WhatsAppBrowser(WAPIBrowser):
         return self._check_authentication(timeout)
 
     @with_timer
-    def get_profile_picture_url(self, phone: str) -> str:
+    def get_profile_picture_url(self, phone: str) -> Optional[str]:
         return self.check_profile_and_get_avatar_url(phone)
